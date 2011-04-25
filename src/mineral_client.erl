@@ -13,12 +13,12 @@
 -record(state, {uid=0, sock=false, chid=0}).
 
 % generates a new random connection-id based on some various random properties
-	
+    
 %% new() -> pid()
 new() ->
-	process_flag(trap_exit, true),
+    process_flag(trap_exit, true),
     State = #state{},
-	proc_lib:spawn_link(fun() -> loop(State) end).
+    proc_lib:spawn_link(fun() -> loop(State) end).
 
 % loop() is the main receive loop for the worker process.
 % receives messages from three sources:
@@ -43,35 +43,35 @@ new() ->
 %% loop(State) -> recursive
 %%   State = record(state)
 loop(#state{sock = Sock} = State) ->
-	% this loop always creates a new state called NewState which may or may not be changed.
-	receive
-		{gen, getuid, From} ->
-			From ! {uid, State#state.uid, self()},
-			loop(State);
-		
-		{gen, destroy, _From} ->
-			exit(userdisconnect);
-			
-		{cli, {setsock, ASock}, _From} ->
-			loop(State#state{sock=ASock});
-			
-		{srv, {setuid, Uid}, _From} ->
-			loop(State#state{uid=Uid});
-		
-		{srv, force_disconnect, _From} ->
-			Sock ! {msg, disconnect},
-			self() ! {gen, destroy, self()},
-			loop(State);
-		
-		{cli, ok, _From} ->
-			loop(State);
-		
-		{cli, keepalive, _From} ->
-			Sock ! {msg, keepalive},
-			loop(State);
-		
-		OtherMsg ->
-			mineral_debug:log("[CLIENT] Client ~p received unknown msg: ~p", [self(), OtherMsg]),
-			loop(State)
-	end,
-	loop(State).
+    % this loop always creates a new state called NewState which may or may not be changed.
+    receive
+        {gen, getuid, From} ->
+            From ! {uid, State#state.uid, self()},
+            loop(State);
+        
+        {gen, destroy, _From} ->
+            exit(userdisconnect);
+            
+        {cli, {setsock, ASock}, _From} ->
+            loop(State#state{sock=ASock});
+            
+        {srv, {setuid, Uid}, _From} ->
+            loop(State#state{uid=Uid});
+        
+        {srv, force_disconnect, _From} ->
+            Sock ! {msg, disconnect},
+            self() ! {gen, destroy, self()},
+            loop(State);
+        
+        {cli, ok, _From} ->
+            loop(State);
+        
+        {cli, keepalive, _From} ->
+            Sock ! {msg, keepalive},
+            loop(State);
+        
+        OtherMsg ->
+            mineral_debug:log("[CLIENT] Client ~p received unknown msg: ~p", [self(), OtherMsg]),
+            loop(State)
+    end,
+    loop(State).

@@ -28,10 +28,10 @@ start_link() ->
     gen_server:start_link({local, mineral_server}, ?MODULE, [], []).
 
 new_client() ->
-	gen_server:call(?MODULE, newclient, 20000).
+    gen_server:call(?MODULE, newclient, 20000).
 
 client_disconnect(Pid) ->
-	gen_server:call(?MODULE, {client_disconnect, Pid}, 20000).
+    gen_server:call(?MODULE, {client_disconnect, Pid}, 20000).
 
 %%====================================================================
 %% gen_server callbacks
@@ -45,8 +45,8 @@ client_disconnect(Pid) ->
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
 init([]) ->
-	process_flag(trap_exit, true),
-	mineral_debug:log("Mineral Server (~p) starting...", [?MODULE]),
+    process_flag(trap_exit, true),
+    mineral_debug:log("Mineral Server (~p) starting...", [?MODULE]),
     {ok, #state{clients=[]}}.
 
 %%--------------------------------------------------------------------
@@ -61,14 +61,14 @@ init([]) ->
 
 % spawns a client process, returns process id
 handle_call(newclient, _From, State) ->
-	mineral_debug:log("[SERVER] Starting new client worker, total clients: ~p", [length(State#state.clients)+1]),
-	Pid = mineral_client:new(),
-	NewState = State#state{clients=[Pid|State#state.clients]},
-	{reply, Pid, NewState};
+    mineral_debug:log("[SERVER] Starting new client worker, total clients: ~p", [length(State#state.clients)+1]),
+    Pid = mineral_client:new(),
+    NewState = State#state{clients=[Pid|State#state.clients]},
+    {reply, Pid, NewState};
 
 handle_call({client_disconnect, Pid}, _From, State) ->
-	Pid ! {gen, destroy, self()},
-	{reply, true, State#state{clients=lists:delete(Pid, State#state.clients)}}.
+    Pid ! {gen, destroy, self()},
+    {reply, true, State#state{clients=lists:delete(Pid, State#state.clients)}}.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
@@ -105,7 +105,7 @@ terminate(_Reason, _State) ->
 %% Description: Convert process state when code is changed
 %%--------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
-	mineral_debug:log("Mineral Server received instruction to code change. Nothing to do.", []),
+    mineral_debug:log("Mineral Server received instruction to code change. Nothing to do.", []),
     {ok, State}.
 
 %%--------------------------------------------------------------------
@@ -113,16 +113,16 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 get_client(_, []) -> noclient;
 get_client(Uid, [Pid|T]) ->
-	io:format("Asking ~p for UID~n", [Pid]),
-	Pid ! {gen, getuid, self()},
-	receive
-		{uid, AUid, Pid} ->
-			case AUid of
-				Uid ->
-					{pid, Pid};
-				_ ->
-					get_client(Uid, T)
-			end;
-		_ ->
-			get_client(Uid, T)
-	end.
+    io:format("Asking ~p for UID~n", [Pid]),
+    Pid ! {gen, getuid, self()},
+    receive
+        {uid, AUid, Pid} ->
+            case AUid of
+                Uid ->
+                    {pid, Pid};
+                _ ->
+                    get_client(Uid, T)
+            end;
+        _ ->
+            get_client(Uid, T)
+    end.

@@ -11,9 +11,9 @@
 % OTP app
 
 start(_Type, StartArgs) ->
-	io:format("~n"),
-	mineral_debug:log("Mineral Minecraft Server starting..."),
-	mineral_supervisor:start_link(StartArgs).
+    io:format("~n"),
+    mineral_debug:log("Mineral Minecraft Server starting..."),
+    mineral_supervisor:start_link(StartArgs).
 
 stop(_State) ->
-	ok.
+    ok.
