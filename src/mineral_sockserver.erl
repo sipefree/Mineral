@@ -29,11 +29,8 @@ create(ServerPid, Pid) ->
 init(Port) ->    
     process_flag(trap_exit, true),
     mineral_debug:log("[LISTEN] Mineral Socket Server (~p) starting on port ~p...", [?MODULE, Port]),
-    case gen_tcp:listen(Port,[binary, {packet, 4},
-                              {reuseaddr, true},
+    case gen_tcp:listen(Port,[binary, {packet, raw},
                               {active, false},
-                              {backlog, 1024},
-                              {keepalive, true},
                               {nodelay, true}]) of
     {ok, Listen_socket} ->
         mineral_debug:log("[LISTEN] Socket process will listen for new connections..."),
