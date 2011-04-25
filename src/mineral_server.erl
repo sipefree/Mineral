@@ -30,7 +30,8 @@ start_link() ->
 new_client() ->
 	gen_server:call(?MODULE, newclient, 20000).
 
-
+client_disconnect(Pid) ->
+	gen_server:call(?MODULE, {client_disconnect, Pid}, 20000).
 
 %%====================================================================
 %% gen_server callbacks
@@ -60,10 +61,14 @@ init([]) ->
 
 % spawns a client process, returns process id
 handle_call(newclient, _From, State) ->
-	mineral_debug:log("Starting new client worker, total clients: ~p", [length(State#state.clients)+1]),
+	mineral_debug:log("[SERVER] Starting new client worker, total clients: ~p", [length(State#state.clients)+1]),
 	Pid = mineral_client:new(),
 	NewState = State#state{clients=[Pid|State#state.clients]},
-	{reply, Pid, NewState}.
+	{reply, Pid, NewState};
+
+handle_call({client_disconnect, Pid}, _From, State) ->
+	Pid ! {gen, destroy, self()},
+	{reply, true, State#state{clients=lists:delete(Pid, State#state.clients)}}.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |

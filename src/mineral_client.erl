@@ -46,33 +46,32 @@ loop(#state{sock = Sock} = State) ->
 	% this loop always creates a new state called NewState which may or may not be changed.
 	receive
 		{gen, getuid, From} ->
-			NewState = State,
-			From ! {uid, State#state.uid, self()};
+			From ! {uid, State#state.uid, self()},
+			loop(State);
 		
 		{gen, destroy, _From} ->
 			exit(userdisconnect);
 			
 		{cli, {setsock, ASock}, _From} ->
-			NewState = State#state{sock=ASock};
+			loop(State#state{sock=ASock});
 			
 		{srv, {setuid, Uid}, _From} ->
-			NewState = State#state{Uid=Uid};
+			loop(State#state{uid=Uid});
 		
 		{srv, force_disconnect, _From} ->
-			NewState = State,
 			Sock ! {msg, disconnect},
-			self() ! {gen, destroy, self()};
+			self() ! {gen, destroy, self()},
+			loop(State);
 		
 		{cli, ok, _From} ->
-			mineral_debug:log("Client is ready: ~p", [State#state.uid]),
-			NewState = State;
+			loop(State);
 		
 		{cli, keepalive, _From} ->
-			NewState = State,
-			Sock ! {msg, keepalive};
+			Sock ! {msg, keepalive},
+			loop(State);
 		
 		OtherMsg ->
-			NewState = State,
-			mineral_debug:log("mineral_client ~p received unknown msg: ~p", [self(), OtherMsg])
+			mineral_debug:log("[CLIENT] Client ~p received unknown msg: ~p", [self(), OtherMsg]),
+			loop(State)
 	end,
-	loop(NewState).
+	loop(State).

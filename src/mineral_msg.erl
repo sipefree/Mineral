@@ -1,1 +1,0 @@
--module(mineral_msg).
