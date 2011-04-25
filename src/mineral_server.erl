@@ -27,7 +27,8 @@
 start_link() ->
     gen_server:start_link({local, mineral_server}, ?MODULE, [], []).
 
-
+new_client() ->
+	gen_server:call(?MODULE, newclient, 20000).
 
 
 
@@ -57,6 +58,12 @@ init([]) ->
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
 
+% spawns a client process, returns process id
+handle_call(newclient, _From, State) ->
+	mineral_debug:log("Starting new client worker, total clients: ~p", [length(State#state.clients)+1]),
+	Pid = mineral_client:new(),
+	NewState = State#state{clients=[Pid|State#state.clients]},
+	{reply, Pid, NewState}.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
