@@ -1,0 +1,1 @@
+-module(mineral_msg).
