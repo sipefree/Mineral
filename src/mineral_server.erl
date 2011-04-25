@@ -8,6 +8,8 @@
 -behaviour(gen_server).
 
 -include("mineral.hrl").
+-include("../include/client_packets.hrl").
+-include("../include/server_packets.hrl").
 
 %% API
 -export([start_link/0]).
@@ -15,7 +17,9 @@
 %% gen_server callbacks
 -compile(export_all).
 
--record(state, {clients}). % clients = [{Cid, mineral_client_process(Pid)}]
+% clients = [{Cid, mineral_client_process(Pid)}]
+-record(entity, {eid, entity}).
+-record(state, {clients, entities, next_eid=1}).
 
 %%====================================================================
 %% API
@@ -30,8 +34,14 @@ start_link() ->
 new_client() ->
     gen_server:call(?MODULE, newclient, 20000).
 
+client_ready() ->
+    gen_server:call(?MODULE, client_ready, 20000).
+
 client_disconnect(Pid) ->
     gen_server:call(?MODULE, {client_disconnect, Pid}, 20000).
+    
+login_request(ProtoVer, Username) ->
+    gen_server:call(?MODULE, {login_request, ProtoVer, Username}, 20000).
 
 %%====================================================================
 %% gen_server callbacks
@@ -65,6 +75,32 @@ handle_call(newclient, _From, State) ->
     Pid = mineral_client:new(),
     NewState = State#state{clients=[Pid|State#state.clients]},
     {reply, Pid, NewState};
+
+handle_call(client_ready, {Pid, _Tag}, State) ->
+    Pid ! {srv, #srv_handshake{connection_hash="-"}, self()},
+    {reply, true, State};
+
+handle_call({login_request, ProtoVer, _Username}, _From, State) ->
+    case ProtoVer of
+        ?MINERAL_PROTOCOL_VERSION ->
+            {
+                reply,
+                #srv_login_response{
+                    player_entity_id = State#state.next_eid,
+                    unused_string = "derp",
+                    map_seed = 1283198273, % FIXME: real map seed
+                    dimension = 0
+                    },
+                State#state{next_eid = State#state.next_eid + 1}
+            };
+        _ ->
+            Reason = io_lib:format("Incompatible protocol: ~p (we're on ~p).", [ProtoVer, ?MINERAL_PROTOCOL_VERSION]),
+            {
+                reply,
+                #srv_disconnect{ reason=Reason },
+                State
+            }
+    end;
 
 handle_call({client_disconnect, Pid}, _From, State) ->
     Pid ! {gen, destroy, self()},

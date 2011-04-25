@@ -7,12 +7,12 @@
 
 -include ("mineral.hrl").
 -include_lib("kernel/include/file.hrl").
+-include("../include/client_packets.hrl").
+-include("../include/server_packets.hrl").
 -compile(export_all).
 -export([new/0]).
 
--record(state, {uid=0, sock=false, chid=0}).
-
-% generates a new random connection-id based on some various random properties
+-record(state, {uid="", sock=false, eid=0}).
     
 %% new() -> pid()
 new() ->
@@ -53,10 +53,8 @@ loop(#state{sock = Sock} = State) ->
             exit(userdisconnect);
             
         {cli, {setsock, ASock}, _From} ->
+            mineral_server:client_ready(),
             loop(State#state{sock=ASock});
-            
-        {srv, {setuid, Uid}, _From} ->
-            loop(State#state{uid=Uid});
         
         {srv, force_disconnect, _From} ->
             Sock ! {msg, disconnect},
@@ -66,8 +64,28 @@ loop(#state{sock = Sock} = State) ->
         {cli, ok, _From} ->
             loop(State);
         
-        {cli, keepalive, _From} ->
-            Sock ! {msg, keepalive},
+        {cli, #cli_keep_alive{}, _From} ->
+            Sock ! #srv_keep_alive{},
+            loop(State);
+            
+        {cli, #cli_login_request{protocol_version = ProtoVer, username = Username}, _From} ->
+            mineral_debug:log("[LOGIN] Client login request received: ~p", Username),
+            Sock ! mineral_server:login_request(ProtoVer, Username),
+            loop(State);
+        
+        {cli, #cli_handshake{username = Username}, _From} ->
+            mineral_server:handshake(Username),
+            loop(State);
+        
+        {cli, #cli_chat_message{message = Message}, _From} ->
+            minseral_server:chat_message(Message),
+            loop(State);
+            
+        
+        
+        
+        {srv, Other, _From} ->
+            Sock ! Other,
             loop(State);
         
         OtherMsg ->

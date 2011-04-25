@@ -38,6 +38,7 @@ init({Listen_pid, Listen_socket, ListenPort}) ->
             register(RegAtom, self()),
             recv_loop(#state{c=C, worker=false});
         Else ->
+            mineral_sockserver:create(Listen_pid, self()),
             error_logger:error_report([{application, mineral},
                            "[FAIL/CONNECT] Accept failed error",
                            io_lib:format("~p",[Else])]),
@@ -71,9 +72,12 @@ recv_loop(#state{c=C, worker=W}) ->
             Pid ! {cli, ok, self()},
             recv_loop(#state{c=C, worker=Pid});
         _ ->
+            mineral_debug:log("[SOCKET] Waiting for packet"),
             case gen_tcp:recv(C#c.sock, 0) of
                 {ok, Bin} ->
-                    Msg = mineral_msg:instr_unpack(Bin),
+                    mineral_debug:log("[SOCKET] Received a message"),
+                    Msg = mineral_msg:unpack(Bin),
+                    mineral_debug:log("[SOCKET] Received message: ~p", [Msg]),
                     case W of
                         false ->
                             mineral_debug:log("[FAIL] Mineral Socket received message but has no worker!"),
@@ -82,6 +86,7 @@ recv_loop(#state{c=C, worker=W}) ->
                             Pid ! Msg
                     end;
                 _Other ->
+                    mineral_debug:log("[SOCKET] error... :("),
                     case W of
                         false ->
                             mineral_debug:log("[DISCONNECT] Mineral Socket has disconnected without a worker process."),
@@ -97,9 +102,14 @@ recv_loop(#state{c=C, worker=W}) ->
     
 handle_outgoing(C) ->
     receive
-
         Msg ->
-            mineral_debug:log("[FAIL/SEND] Mineral Socket cannot send message: ~p", [Msg])
+            case mineral_msg:pack(Msg) of
+                error ->
+                    mineral_debug:log("[FAIL/SEND] Mineral Socket cannot send message: ~p", [Msg]);
+                Bin ->
+                    mineral_debug:log("[SEND] Sending message: ~p", [Msg]),
+                    send_message(C, Bin)
+            end
     end,
     handle_outgoing(C).
 
