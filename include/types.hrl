@@ -9,3 +9,4 @@
 -define(mc_float(X), X:32/big-float).
 -define(mc_double(X), X:64/big-float).
 -define(mc_bool(X), X:8/big-unsigned-integer).
+
