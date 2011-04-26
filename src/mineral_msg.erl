@@ -21,8 +21,8 @@ pack(#srv_handshake{
           packet_id = ID,
           connection_hash = Hash
           }) ->
-    HashBin = erlang:list_to_binary(Hash),
-    Size = erlang:size(HashBin),
+    HashBin = ?mc_ucs2(Hash),
+    Size = erlang:size(Hash),
     <<?mc_byte(ID), ?mc_short(Size), HashBin/binary>>;
 
 pack(#srv_chat_message{
@@ -60,7 +60,7 @@ unpack(<<?mc_byte(PacketID), Rest/binary>>) ->
     2 ->
         <<?mc_short(_Length), Username/binary>> = Rest,
         #cli_handshake{
-            username = erlang:binary_to_list(Username)
+            username = unicode:characters_to_list(Username, utf16)
         };
     3 ->
         <<?mc_short(_Length), Message/binary>> = Rest,

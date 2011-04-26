@@ -53,7 +53,7 @@ loop(#state{sock = Sock} = State) ->
             exit(userdisconnect);
             
         {cli, {setsock, ASock}, _From} ->
-            mineral_server:client_ready(),
+            % mineral_server:client_ready(),
             loop(State#state{sock=ASock});
         
         {srv, force_disconnect, _From} ->
@@ -64,20 +64,20 @@ loop(#state{sock = Sock} = State) ->
         {cli, ok, _From} ->
             loop(State);
         
-        {cli, #cli_keep_alive{}, _From} ->
+        #cli_keep_alive{} ->
             Sock ! #srv_keep_alive{},
             loop(State);
             
-        {cli, #cli_login_request{protocol_version = ProtoVer, username = Username}, _From} ->
+        #cli_login_request{protocol_version = ProtoVer, username = Username} ->
             mineral_debug:log("[LOGIN] Client login request received: ~p", Username),
             Sock ! mineral_server:login_request(ProtoVer, Username),
             loop(State);
         
-        {cli, #cli_handshake{username = Username}, _From} ->
-            mineral_server:handshake(Username),
+        #cli_handshake{username = Username} ->
+            Sock ! #srv_handshake{connection_hash= <<"-">> },
             loop(State);
         
-        {cli, #cli_chat_message{message = Message}, _From} ->
+        #cli_chat_message{message = Message} ->
             minseral_server:chat_message(Message),
             loop(State);
             

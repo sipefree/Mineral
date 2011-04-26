@@ -9,4 +9,5 @@
 -define(mc_float(X), X:32/big-float).
 -define(mc_double(X), X:64/big-float).
 -define(mc_bool(X), X:8/big-unsigned-integer).
+-define(mc_ucs2(X), unicode:characters_to_binary(X, utf8, {utf16, big})).
 
