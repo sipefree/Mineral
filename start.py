@@ -6,7 +6,7 @@ mnesiadir = os.path.abspath("./db")
 cmd = "erl -K true -pa ./ebin -boot start_sasl -config elog -name mineral@local"
 
 def myrun(it):
-    print it
+    print(it)
     os.system(it)
 
 if len(argv) > 1:
