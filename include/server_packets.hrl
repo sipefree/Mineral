@@ -1,3 +1,4 @@
+%%% Author: Andrew Anderson <andrew.wja@gmail.com>
 %%% @doc
 %%% Records for messages (Server to Client packets)
 %%% @end
@@ -24,6 +25,14 @@
       message
      }).
 
+-record(srv_inventory, {
+      packet_id = 5,
+      player_entity_id,
+      slot_id,
+      item_id,
+      unknown
+     }).
+      
 -record(srv_disconnect, {
     packet_id = 16#FF,
     reason

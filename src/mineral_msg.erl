@@ -15,7 +15,7 @@ pack(#srv_login_response{
           }) ->
     UUSBin = <<UUS/binary>>,
     Size = erlang:size(UUSBin),
-    <<?mc_byte(ID), ?mc_short(PEID), ?mc_short(Size), UUS/binary, ?mc_short(MS), ?mc_short(DIM)>>;
+    <<?mc_byte(ID), ?mc_int(PEID), ?mc_short(Size), UUS/binary, ?mc_short(MS), ?mc_short(DIM)>>;
 
 pack(#srv_handshake{
           packet_id = ID,
@@ -33,6 +33,15 @@ pack(#srv_chat_message{
     Size = erlang:size(MessageBin),
     <<?mc_byte(ID), ?mc_short(Size), MessageBin>>;
     
+pack(#srv_inventory{
+          packet_id = ID,
+          player_entity_id = PEID,
+          slot_id = SID,
+          item_id = IID,
+          unknown = Unknown
+          }) ->
+    <<?mc_byte(ID), ?mc_int(PEID), ?mc_short(SID), ?mc_short(IID), ?mc_short(Unknown)>>;
+
 pack(_) ->
     error.
 
@@ -45,8 +54,8 @@ unpack(<<?mc_byte(PacketID), Rest/binary>>) ->
         ULength = 8*UsernameLength,
         <<Username:ULength/native-signed-integer>> = RRest,
         #cli_login_request{
-                protocol_version = ProtocolVersion,
-                username = Username
+            protocol_version = ProtocolVersion,
+            username = Username
         };
     2 ->
         <<?mc_short(_Length), Username/binary>> = Rest,
@@ -55,9 +64,9 @@ unpack(<<?mc_byte(PacketID), Rest/binary>>) ->
         };
     3 ->
         <<?mc_short(_Length), Message/binary>> = Rest,
-          #cli_chat_message{
-                 message = Message
-          };
+        #cli_chat_message{
+            message = Message
+        };
     _ ->
         error
     end.
