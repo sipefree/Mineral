@@ -77,7 +77,6 @@ handle_call(newclient, _From, State) ->
     {reply, Pid, NewState};
 
 handle_call(client_ready, {Pid, _Tag}, State) ->
-    Pid ! {srv, #srv_handshake{connection_hash="-"}, self()},
     {reply, true, State};
 
 handle_call({login_request, ProtoVer, _Username}, _From, State) ->
