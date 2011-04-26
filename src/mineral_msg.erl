@@ -21,7 +21,7 @@ pack(#srv_handshake{
           packet_id = ID,
           connection_hash = Hash
           }) ->
-    HashBin = ?mc_ucs16(Hash),
+    HashBin = ?mc_ucs2(Hash),
     Size = erlang:size(Hash),
     <<?mc_byte(ID), ?mc_short(Size), HashBin/binary>>;
 
