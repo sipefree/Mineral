@@ -1,3 +1,5 @@
 logs/*
+
+erl_crash.dump
+elog.config
 ebin/*
-src/*.beam
