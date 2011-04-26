@@ -1,3 +1,7 @@
+%%%
+%%%
+%%%
+
 -module(mineral_msg).
 
 -include("../include/client_packets.hrl").
