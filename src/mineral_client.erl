@@ -69,7 +69,7 @@ loop(#state{sock = Sock} = State) ->
             loop(State);
             
         #cli_login_request{protocol_version = ProtoVer, username = Username} ->
-            mineral_debug:log("[LOGIN] Client login request received: ~p", Username),
+            mineral_debug:log("[LOGIN] Client login request received: ~p", [Username]),
             Sock ! mineral_server:login_request(ProtoVer, Username),
             loop(State);
         

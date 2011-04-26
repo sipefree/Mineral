@@ -6,6 +6,8 @@
 
 -export([pack/1, unpack/1]).
 
+-compile([debug_info]).
+
 pack(#srv_login_response{
            packet_id = ID, 
            player_entity_id = PEID,
@@ -13,9 +15,13 @@ pack(#srv_login_response{
            map_seed = MS,
            dimension = DIM
           }) ->
-    UUSBin = <<UUS/binary>>,
+    UUSBin = erlang:list_to_binary(UUS),
     Size = erlang:size(UUSBin),
-    <<?mc_byte(ID), ?mc_int(PEID), ?mc_short(Size), UUS/binary, ?mc_short(MS), ?mc_short(DIM)>>;
+    UUSUCS = ?mc_ucs2(UUSBin),
+    <<?mc_byte(ID), ?mc_int(PEID), ?mc_short(Size), UUSUCS/binary, ?mc_long(MS), ?mc_byte(DIM)>>;
+
+pack(#srv_keep_alive{}) ->
+    <<?mc_byte(0)>>;
 
 pack(#srv_handshake{
           packet_id = ID,
@@ -49,13 +55,19 @@ pack(_) ->
 
 unpack(<<?mc_byte(PacketID), Rest/binary>>) ->
     case PacketID of
+    0 ->
+        #cli_keep_alive{};
     1 ->
         <<?mc_int(ProtocolVersion), ?mc_short(UsernameLength), RRest/binary>> = Rest,
-        ULength = 8*UsernameLength,
-        <<Username:ULength/native-signed-integer>> = RRest,
+        ULength = 2*UsernameLength,
+        <<UsernameBin:ULength/binary, RRRest/binary>> = RRest,
+        Username = unicode:characters_to_list(UsernameBin, utf16),
+        <<?mc_long(MapSeed), ?mc_byte(Dimension)>> = RRRest,
         #cli_login_request{
             protocol_version = ProtocolVersion,
-            username = Username
+            username = Username,
+            map_seed = MapSeed,
+            dimension = Dimension
         };
     2 ->
         <<?mc_short(_Length), Username/binary>> = Rest,
@@ -68,6 +80,6 @@ unpack(<<?mc_byte(PacketID), Rest/binary>>) ->
             message = Message
         };
     _ ->
-        error
+        {unknown, PacketID, Rest}
     end.
 
