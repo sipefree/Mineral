@@ -1,14 +1,14 @@
 %%% @doc
 %%% Records for messages (Client to Server packets)
 %%% @end
-
+-include("server_packets.hrl").
 
 -record(cli_keep_alive, {
-      packet_id = 0
+      packet_id = ?PROTO_KEEP_ALIVE
      }).
 
 -record(cli_login_request, {
-      packet_id = 1,
+      packet_id = ?PROTO_LOGIN_REQUEST,
       protocol_version = 11,
       username,
       map_seed,
@@ -16,12 +16,12 @@
      }).
 
 -record(cli_handshake, {
-      packet_id = 2,
+      packet_id = ?PROTO_HANDSHAKE,
       username
      }).
 
 -record(cli_chat_message, {
-      packet_id = 3,
+      packet_id = ?PROTO_CHAT_MESSAGE,
       message
      }).
 
